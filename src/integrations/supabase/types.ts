@@ -14,7 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      partners: {
+        Row: {
+          city: string | null
+          collaboration_type: string | null
+          comments: string | null
+          contact_name: string | null
+          contact_role: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          exchange_frequency: string | null
+          first_contact_date: string | null
+          follow_up_status: string | null
+          geographic_zone: string | null
+          id: string
+          impact_score: string | null
+          internal_manager: string | null
+          intervention_domain: string | null
+          involved_team: string | null
+          last_interaction_date: string | null
+          last_interaction_type: string | null
+          mou_signed: boolean | null
+          name: string
+          next_action: string | null
+          next_action_deadline: string | null
+          objectives_summary: string | null
+          opportunities: string | null
+          partner_code: string
+          partner_type: string
+          partnership_duration: string | null
+          partnership_start_date: string | null
+          partnership_status: string | null
+          phone: string | null
+          preferred_channel: string | null
+          region: string | null
+          relational_risks: string | null
+          relational_score: number | null
+          strategic_alignment: string | null
+          strategic_level: string | null
+          sub_sector: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          collaboration_type?: string | null
+          comments?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          exchange_frequency?: string | null
+          first_contact_date?: string | null
+          follow_up_status?: string | null
+          geographic_zone?: string | null
+          id?: string
+          impact_score?: string | null
+          internal_manager?: string | null
+          intervention_domain?: string | null
+          involved_team?: string | null
+          last_interaction_date?: string | null
+          last_interaction_type?: string | null
+          mou_signed?: boolean | null
+          name: string
+          next_action?: string | null
+          next_action_deadline?: string | null
+          objectives_summary?: string | null
+          opportunities?: string | null
+          partner_code: string
+          partner_type: string
+          partnership_duration?: string | null
+          partnership_start_date?: string | null
+          partnership_status?: string | null
+          phone?: string | null
+          preferred_channel?: string | null
+          region?: string | null
+          relational_risks?: string | null
+          relational_score?: number | null
+          strategic_alignment?: string | null
+          strategic_level?: string | null
+          sub_sector?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          collaboration_type?: string | null
+          comments?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          exchange_frequency?: string | null
+          first_contact_date?: string | null
+          follow_up_status?: string | null
+          geographic_zone?: string | null
+          id?: string
+          impact_score?: string | null
+          internal_manager?: string | null
+          intervention_domain?: string | null
+          involved_team?: string | null
+          last_interaction_date?: string | null
+          last_interaction_type?: string | null
+          mou_signed?: boolean | null
+          name?: string
+          next_action?: string | null
+          next_action_deadline?: string | null
+          objectives_summary?: string | null
+          opportunities?: string | null
+          partner_code?: string
+          partner_type?: string
+          partnership_duration?: string | null
+          partnership_start_date?: string | null
+          partnership_status?: string | null
+          phone?: string | null
+          preferred_channel?: string | null
+          region?: string | null
+          relational_risks?: string | null
+          relational_score?: number | null
+          strategic_alignment?: string | null
+          strategic_level?: string | null
+          sub_sector?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
