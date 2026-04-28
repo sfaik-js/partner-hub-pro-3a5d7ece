@@ -24,12 +24,12 @@ type Props = {
   submitLabel?: string;
 };
 
-const toForm = (p?: Partial<Partner>): Partial<PartnerFormValues> => ({
+const toForm = (p?: Partial<Partner>): PartnerFormValues => ({
   name: p?.name ?? "",
-  partner_type: (p?.partner_type as PartnerFormValues["partner_type"]) ?? undefined,
-  intervention_domain: p?.intervention_domain ?? undefined,
+  partner_type: (p?.partner_type as PartnerFormValues["partner_type"]) ?? ("" as PartnerFormValues["partner_type"]),
+  intervention_domain: p?.intervention_domain as PartnerFormValues["intervention_domain"],
   sub_sector: p?.sub_sector ?? "",
-  geographic_zone: p?.geographic_zone ?? undefined,
+  geographic_zone: p?.geographic_zone as PartnerFormValues["geographic_zone"],
   region: p?.region ?? "",
   city: p?.city ?? "",
   country: p?.country ?? "",
@@ -37,10 +37,10 @@ const toForm = (p?: Partial<Partner>): Partial<PartnerFormValues> => ({
   contact_role: p?.contact_role ?? "",
   email: p?.email ?? "",
   phone: p?.phone ?? "",
-  preferred_channel: p?.preferred_channel ?? undefined,
+  preferred_channel: p?.preferred_channel as PartnerFormValues["preferred_channel"],
   partnership_status: (p?.partnership_status as PartnerFormValues["partnership_status"]) ?? "Prospect",
-  strategic_level: p?.strategic_level ?? undefined,
-  collaboration_type: p?.collaboration_type ?? undefined,
+  strategic_level: p?.strategic_level as PartnerFormValues["strategic_level"],
+  collaboration_type: p?.collaboration_type as PartnerFormValues["collaboration_type"],
   partnership_duration: p?.partnership_duration ?? "",
   first_contact_date: p?.first_contact_date ?? "",
   partnership_start_date: p?.partnership_start_date ?? "",
@@ -48,15 +48,15 @@ const toForm = (p?: Partial<Partner>): Partial<PartnerFormValues> => ({
   involved_team: p?.involved_team ?? "",
   internal_manager: p?.internal_manager ?? "",
   last_interaction_date: p?.last_interaction_date ?? "",
-  last_interaction_type: p?.last_interaction_type ?? undefined,
-  exchange_frequency: p?.exchange_frequency ?? undefined,
+  last_interaction_type: p?.last_interaction_type as PartnerFormValues["last_interaction_type"],
+  exchange_frequency: p?.exchange_frequency as PartnerFormValues["exchange_frequency"],
   next_action: p?.next_action ?? "",
   next_action_deadline: p?.next_action_deadline ?? "",
-  follow_up_status: p?.follow_up_status ?? undefined,
+  follow_up_status: p?.follow_up_status as PartnerFormValues["follow_up_status"],
   relational_score: p?.relational_score ?? undefined,
-  impact_score: p?.impact_score ?? undefined,
-  strategic_alignment: p?.strategic_alignment ?? undefined,
-  opportunities: p?.opportunities ?? undefined,
+  impact_score: p?.impact_score as PartnerFormValues["impact_score"],
+  strategic_alignment: p?.strategic_alignment as PartnerFormValues["strategic_alignment"],
+  opportunities: p?.opportunities as PartnerFormValues["opportunities"],
   relational_risks: p?.relational_risks ?? "",
   comments: p?.comments ?? "",
   objectives_summary: p?.objectives_summary ?? "",
@@ -117,7 +117,7 @@ function TextField({ control, name, label, type = "text", placeholder }: {
 export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel = "Enregistrer" }: Props) {
   const form = useForm<PartnerFormValues>({
     resolver: zodResolver(partnerSchema),
-    defaultValues: toForm(defaultValues) as PartnerFormValues,
+    defaultValues: toForm(defaultValues),
   });
 
   return (
