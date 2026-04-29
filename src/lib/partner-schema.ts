@@ -16,7 +16,7 @@ export const partnerSchema = z.object({
   partner_type: z.enum(PARTNER_TYPES, { errorMap: () => ({ message: "Type obligatoire" }) }),
   intervention_domain: optEnum(INTERVENTION_DOMAINS),
   sub_sector: optStr,
-  geographic_zone: optEnum(GEOGRAPHIC_ZONES),
+  geographic_zone: optStr,
   region: optStr,
   city: optStr,
   country: optStr,
