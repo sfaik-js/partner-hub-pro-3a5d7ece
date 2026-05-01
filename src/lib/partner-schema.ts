@@ -18,6 +18,7 @@ export const partnerSchema = z.object({
   sub_sector: optStr,
   geographic_zone: optStr,
   region: optStr,
+  province: optStr,
   city: optStr,
   country: optStr,
   contact_name: optStr,
