@@ -7,7 +7,7 @@ import {
   INTERACTION_TYPES, EXCHANGE_FREQUENCIES, FOLLOW_UP_STATUSES,
   IMPACT_SCORES, STRATEGIC_ALIGNMENTS, OPPORTUNITIES,
 } from "@/lib/partner-constants";
-import { getRegionals, getPays, getRegions, getVilles } from "@/lib/location-data";
+import { getRegionals, getPays, getRegions, getProvinces, getVilles } from "@/lib/location-data";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +33,7 @@ const toForm = (p?: Partial<Partner>): PartnerFormValues => ({
   sub_sector: p?.sub_sector ?? "",
   geographic_zone: p?.geographic_zone as PartnerFormValues["geographic_zone"],
   region: p?.region ?? "",
+  province: p?.province ?? "",
   city: p?.city ?? "",
   country: p?.country ?? "",
   contact_name: p?.contact_name ?? "",
@@ -128,11 +129,13 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
   const watchedZone = form.watch("geographic_zone");
   const watchedPays = form.watch("country");
   const watchedRegion = form.watch("region");
+  const watchedProvince = form.watch("province");
 
   const regionals = getRegionals();
   const paysList = getPays(watchedZone);
   const regionsList = getRegions(watchedZone, watchedPays);
-  const villesList = getVilles(watchedZone, watchedPays, watchedRegion);
+  const provincesList = getProvinces(watchedZone, watchedPays, watchedRegion);
+  const villesList = getVilles(watchedZone, watchedPays, watchedRegion, watchedProvince);
 
   return (
     <Form {...form}>
@@ -170,7 +173,7 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
 
                 <div className="bg-muted/20 p-6 rounded-2xl border border-border/50">
                   <h3 className="text-lg font-bold mb-4 flex items-center text-foreground"><Target className="w-5 h-5 mr-2 text-primary" /> Localisation</h3>
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
                     <FormField
                       control={form.control}
                       name="geographic_zone"
@@ -182,6 +185,7 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
                               field.onChange(val);
                               form.setValue("country", "");
                               form.setValue("region", "");
+                              form.setValue("province", "");
                               form.setValue("city", "");
                             }} 
                             value={(field.value as string) ?? ""}
@@ -211,6 +215,7 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
                             onValueChange={(val) => {
                               field.onChange(val);
                               form.setValue("region", "");
+                              form.setValue("province", "");
                               form.setValue("city", "");
                             }} 
                             value={(field.value as string) ?? ""}
@@ -234,11 +239,12 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
                       name="region"
                       render={({ field }) => (
                         <FormItem className="space-y-1.5">
-                          <FormLabel className="text-sm font-semibold text-foreground/80">Région / Province</FormLabel>
+                          <FormLabel className="text-sm font-semibold text-foreground/80">Région</FormLabel>
                           <Select 
                             disabled={!watchedPays || regionsList.length === 0}
                             onValueChange={(val) => {
                               field.onChange(val);
+                              form.setValue("province", "");
                               form.setValue("city", "");
                             }} 
                             value={(field.value as string) ?? ""}
@@ -259,18 +265,46 @@ export function PartnerForm({ defaultValues, onSubmit, submitting, submitLabel =
 
                     <FormField
                       control={form.control}
+                      name="province"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-semibold text-foreground/80">Province</FormLabel>
+                          <Select 
+                            disabled={!watchedRegion || provincesList.length === 0}
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                              form.setValue("city", "");
+                            }} 
+                            value={(field.value as string) ?? ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="bg-background shadow-sm border-muted-foreground/20 focus:ring-primary/50 transition-all rounded-lg h-11 disabled:opacity-50">
+                                <SelectValue placeholder={!watchedRegion ? "Sélectionnez région..." : "Choisir province..."} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="rounded-xl shadow-lg border-muted-foreground/20">
+                              {provincesList.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="city"
                       render={({ field }) => (
                         <FormItem className="space-y-1.5">
                           <FormLabel className="text-sm font-semibold text-foreground/80">Ville</FormLabel>
                           <Select 
-                            disabled={!watchedRegion || villesList.length === 0}
+                            disabled={!watchedProvince || villesList.length === 0}
                             onValueChange={field.onChange} 
                             value={(field.value as string) ?? ""}
                           >
                             <FormControl>
                               <SelectTrigger className="bg-background shadow-sm border-muted-foreground/20 focus:ring-primary/50 transition-all rounded-lg h-11 disabled:opacity-50">
-                                <SelectValue placeholder={!watchedRegion ? "Sélectionnez région..." : "Choisir ville..."} />
+                                <SelectValue placeholder={!watchedProvince ? "Sélectionnez province..." : "Choisir ville..."} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="rounded-xl shadow-lg border-muted-foreground/20">

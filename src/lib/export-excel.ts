@@ -5,6 +5,7 @@ const COLUMN_LABELS: Record<string, string> = {
   partner_code: "Code", name: "Nom", partner_type: "Type",
   intervention_domain: "Domaine", sub_sector: "Sous-secteur",
   geographic_zone: "Zone géo.", region: "Région", city: "Ville", country: "Pays",
+  province: "Province",
   contact_name: "Contact", contact_role: "Fonction", email: "Email", phone: "Téléphone",
   preferred_channel: "Canal préféré",
   partnership_status: "Statut", strategic_level: "Niveau stratégique",
