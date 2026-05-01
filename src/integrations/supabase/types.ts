@@ -48,6 +48,7 @@ export type Database = {
           partnership_status: string | null
           phone: string | null
           preferred_channel: string | null
+          province: string | null
           region: string | null
           relational_risks: string | null
           relational_score: number | null
@@ -89,6 +90,7 @@ export type Database = {
           partnership_status?: string | null
           phone?: string | null
           preferred_channel?: string | null
+          province?: string | null
           region?: string | null
           relational_risks?: string | null
           relational_score?: number | null
@@ -130,6 +132,7 @@ export type Database = {
           partnership_status?: string | null
           phone?: string | null
           preferred_channel?: string | null
+          province?: string | null
           region?: string | null
           relational_risks?: string | null
           relational_score?: number | null
