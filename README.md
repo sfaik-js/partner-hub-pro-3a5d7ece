@@ -1,3 +1,5 @@
-# Welcome to your Lovable project
+## run this command to start the project in docker:
 
-TODO: Document your project here
+```bash
+docker compose up -d --build
+```
