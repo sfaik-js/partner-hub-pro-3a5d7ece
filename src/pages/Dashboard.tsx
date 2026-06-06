@@ -1,52 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+// Dashboard.tsx - redesigned
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Users, CheckCircle2, TrendingUp, AlertCircle, Filter as FilterIcon, Sparkles } from "lucide-react";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, CartesianGrid,
-} from "recharts";
 import { usePartners } from "@/hooks/use-partners";
 import { MOROCCO_REGIONS, type Partner } from "@/data/partners";
 import { PartnersMap } from "@/components/partners-map";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, CartesianGrid, LineChart, Line, Area, AreaChart,
+} from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Users, CheckCircle2, TrendingUp, AlertCircle, Filter as FilterIcon, Sparkles } from "lucide-react";
 
-export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard Partenaires" }, { name: "description", content: "Vue d'ensemble du réseau de partenaires" }] }),
-  component: DashboardPage,
-});
-
-const PIE_COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 const ALL = "__all__";
-
-type StatProps = {
-  icon: typeof Users;
-  label: string;
-  value: string | number;
-  gradient: string;
-  trend?: string;
-};
-
-function StatCard({ icon: Icon, label, value, gradient, trend }: StatProps) {
-  return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 text-white shadow-lg ${gradient}`}>
-      <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
-      <div className="absolute -bottom-8 -right-2 h-16 w-16 rounded-full bg-white/10" />
-      <div className="relative flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider opacity-90">{label}</p>
-          <p className="mt-2 text-4xl font-bold">{value}</p>
-          {trend && <p className="mt-1 text-xs opacity-90">{trend}</p>}
-        </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const { data: partners, isLoading } = usePartners();
@@ -70,202 +35,399 @@ export default function DashboardPage() {
     const actifs = filtered.filter((p) => p.partnership_status === "Actif").length;
     const critiques = filtered.filter((p) => p.follow_up_status === "Critique").length;
     const avgScore = total ? Math.round(filtered.reduce((s, p) => s + p.relation_score, 0) / total) : 0;
-
     const group = (key: (p: Partner) => string) => Object.entries(
       filtered.reduce<Record<string, number>>((acc, p) => { const k = key(p); acc[k] = (acc[k] || 0) + 1; return acc; }, {})
     ).map(([name, value]) => ({ name, value }));
-
     const byType = group((p) => p.partner_type);
     const byStatus = group((p) => p.partnership_status);
     const byRegion = group((p) => p.region).sort((a, b) => b.value - a.value);
-
     const domains = ["strategique", "operationnel", "financier", "innovation"] as const;
     const byDomain = domains.map((d) => ({
       domain: d.charAt(0).toUpperCase() + d.slice(1),
       score: total ? Math.round(filtered.reduce((s, p) => s + p.domain_scores[d], 0) / total) : 0,
     }));
-
     return { total, actifs, critiques, avgScore, byType, byStatus, byRegion, byDomain };
   }, [filtered]);
 
   const reset = () => { setType(ALL); setRegion(ALL); setStatus(ALL); setFollow(ALL); };
 
-  if (isLoading || !partners) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-        <div className="container mx-auto space-y-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
-          </div>
-          <Skeleton className="h-96 rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto space-y-6 p-6">
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0a0e1a 0%, #0d1b2e 40%, #0a1628 70%, #061020 100%)",
+      padding: "24px",
+      fontFamily: "sans-serif",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Subtle grid overlay */}
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: "linear-gradient(rgba(0,180,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,180,255,0.03) 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1400, margin: "0 auto" }}>
+
         {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 text-white shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-              <Sparkles className="h-6 w-6" />
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 28, padding: "16px 24px",
+          background: "rgba(0,140,255,0.05)",
+          border: "1px solid rgba(0,180,255,0.15)",
+          borderRadius: 12,
+          backdropFilter: "blur(12px)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: "rgba(0,180,255,0.15)",
+              border: "1px solid rgba(0,180,255,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Sparkles style={{ width: 20, height: 20, color: "#00b4ff" }} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Dashboard Partenaires</h1>
-              <p className="text-sm text-white/80">Vue d'ensemble de votre réseau au Maroc</p>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: "#e0f4ff", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+               TABLEAU DE BORD PARTENAIRES
+              </h1>
+              <p style={{ margin: 0, fontSize: 11, color: "rgba(120,200,255,0.6)", letterSpacing: "0.15em" }}>
+                VISUALISATION · PARTENAIRES · DASHBOARD
+              </p>
             </div>
           </div>
-          <div className="rounded-xl bg-white/15 px-4 py-2 text-sm backdrop-blur">
-            <span className="font-semibold">{filtered.length}</span> partenaire(s) affiché(s)
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <span style={{ fontSize: 12, color: "rgba(120,200,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00e5a0", display: "inline-block" }} />
+              {filtered.length} partenaires actifs
+            </span>
+            <span style={{ fontSize: 14, color: "#00b4ff", fontWeight: 500 }}>
+              {new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
           </div>
-        </header>
+        </div>
 
-        {/* Filters */}
-        <Card className="rounded-2xl border-0 shadow-md">
-          <CardContent className="flex flex-wrap items-center gap-3 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700">
-              <FilterIcon className="h-4 w-4" /> Filtres
+        {/* KPI Row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "INDICATEUR  1", sublabel: "Total Partenaires", value: stats.total.toLocaleString(), color: "#00b4ff", icon: <Users style={{ width: 18, height: 18 }} /> },
+            { label: "INDICATEUR  2", sublabel: "Partenaires Actifs", value: stats.actifs.toLocaleString(), color: "#00e5a0", icon: <CheckCircle2 style={{ width: 18, height: 18 }} /> },
+            { label: "INDICATEUR  3", sublabel: "Score Moyen", value: stats.avgScore, color: "#a78bfa", icon: <TrendingUp style={{ width: 18, height: 18 }} /> },
+            { label: "INDICATEUR  4", sublabel: "Cas Critiques", value: stats.critiques, color: "#f97316", icon: <AlertCircle style={{ width: 18, height: 18 }} /> },
+          ].map((kpi, i) => (
+            <div key={i} style={{
+              background: "rgba(5,20,40,0.7)",
+              border: `1px solid ${kpi.color}30`,
+              borderTop: `2px solid ${kpi.color}`,
+              borderRadius: 10,
+              padding: "18px 20px",
+              position: "relative",
+              overflow: "hidden",
+              backdropFilter: "blur(8px)",
+            }}>
+              <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: `${kpi.color}08` }} />
+              <div style={{ fontSize: 11, color: "rgba(150,200,255,0.6)", letterSpacing: "0.12em", marginBottom: 6 }}>{kpi.label}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: kpi.color, letterSpacing: "0.02em", marginBottom: 4, fontVariantNumeric: "tabular-nums" }}>
+                {kpi.value}
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(180,220,255,0.5)" }}>{kpi.sublabel}</div>
+              <div style={{ position: "absolute", bottom: 12, right: 12, color: `${kpi.color}60` }}>{kpi.icon}</div>
             </div>
-            <FilterSelect value={type} onChange={setType} placeholder="Type de partenaire"
-              options={Array.from(new Set(partners.map((p) => p.partner_type)))} />
-            <FilterSelect value={region} onChange={setRegion} placeholder="Région"
-              options={[...MOROCCO_REGIONS]} />
-            <FilterSelect value={status} onChange={setStatus} placeholder="Statut partenariat"
-              options={Array.from(new Set(partners.map((p) => p.partnership_status)))} />
-            <FilterSelect value={follow} onChange={setFollow} placeholder="Statut de suivi"
-              options={Array.from(new Set(partners.map((p) => p.follow_up_status)))} />
-            <Button variant="ghost" size="sm" onClick={reset} className="ml-auto text-indigo-700 hover:bg-indigo-50">
-              Réinitialiser
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* KPIs */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={Users} label="Total Partenaires" value={stats.total}
-            gradient="bg-gradient-to-br from-indigo-500 to-blue-600"
-            trend="Réseau global" />
-          <StatCard icon={CheckCircle2} label="Partenaires Actifs" value={stats.actifs}
-            gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
-            trend={`${stats.total ? Math.round((stats.actifs / stats.total) * 100) : 0}% du réseau`} />
-          <StatCard icon={TrendingUp} label="Score Relation Moy." value={stats.avgScore}
-            gradient="bg-gradient-to-br from-amber-500 to-orange-600"
-            trend="Sur 100 points" />
-          <StatCard icon={AlertCircle} label="Cas Critiques" value={stats.critiques}
-            gradient="bg-gradient-to-br from-rose-500 to-pink-600"
-            trend="À traiter en priorité" />
+          ))}
         </div>
 
-        {/* Charts grid */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard title="Répartition par type de partenaire" accent="from-indigo-500 to-purple-500">
-            {stats.byType.length === 0 ? <Empty /> : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={stats.byType} dataKey="value" nameKey="name" outerRadius={95} innerRadius={50} paddingAngle={3} label>
-                    {stats.byType.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
+        {/* Main layout: 3 columns */}
+        <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 240px", gap: 16, marginBottom: 16 }}>
 
-          <ChartCard title="Distribution des statuts" accent="from-cyan-500 to-blue-500">
-            {stats.byStatus.length === 0 ? <Empty /> : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={stats.byStatus}>
-                  <defs>
-                    <linearGradient id="barGrad1" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" />
-                      <stop offset="100%" stopColor="#3b82f6" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="url(#barGrad1)" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
+          {/* Left column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <PanelBox title="Répartition par type" accent="#00b4ff">
+              <div style={{ height: 160 }}>
+                {stats.byType.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={stats.byType.map((d, i) => ({ ...d, idx: i + 1 }))}>
+                      <defs>
+                        <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00b4ff" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#00b4ff" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" tick={{ fill: "rgba(120,200,255,0.5)", fontSize: 9 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ background: "#0d1b2e", border: "1px solid #00b4ff40", borderRadius: 6, fontSize: 11, color: "#e0f4ff" }} />
+                      <Area type="monotone" dataKey="value" stroke="#00b4ff" strokeWidth={1.5} fill="url(#grad1)" dot={{ fill: "#00b4ff", r: 2 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                <LegendDot color="#00b4ff" label="Série 1" />
+                <LegendDot color="#00e5a0" label="Série 2" />
+              </div>
+            </PanelBox>
 
-          <ChartCard title="Score moyen par domaine" accent="from-pink-500 to-rose-500">
-            <ResponsiveContainer width="100%" height={280}>
-              <RadarChart data={stats.byDomain}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="domain" tick={{ fontSize: 12, fill: "#475569" }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                <Radar name="Score" dataKey="score" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            <PanelBox title="État des partenariats" accent="#00e5a0">
+              <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
+                <div><span style={{ fontSize: 10, color: "rgba(120,200,255,0.5)" }}>Total</span> <span style={{ fontSize: 14, fontWeight: 600, color: "#00e5a0" }}>{stats.total.toLocaleString()}</span></div>
+                <div><span style={{ fontSize: 10, color: "rgba(120,200,255,0.5)" }}>Actifs</span> <span style={{ fontSize: 14, fontWeight: 600, color: "#00b4ff" }}>{stats.actifs.toLocaleString()}</span></div>
+              </div>
+              <div style={{ height: 120 }}>
+                {stats.byStatus.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stats.byStatus}>
+                      <XAxis dataKey="name" tick={{ fill: "rgba(120,200,255,0.4)", fontSize: 8 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ background: "#0d1b2e", border: "1px solid #00e5a040", borderRadius: 6, fontSize: 11, color: "#e0f4ff" }} />
+                      <Line type="monotone" dataKey="value" stroke="#00e5a0" strokeWidth={1.5} dot={{ fill: "#00e5a0", r: 2 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </div>
+            </PanelBox>
 
-          <ChartCard title="Couverture géographique (top régions)" accent="from-emerald-500 to-teal-500">
-            {stats.byRegion.length === 0 ? <Empty /> : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={stats.byRegion.slice(0, 8)} layout="vertical" margin={{ left: 20 }}>
-                  <defs>
-                    <linearGradient id="barGrad2" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#14b8a6" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis type="number" allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="url(#barGrad2)" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartCard>
+            <PanelBox title="Derniers partenaires" accent="#a78bfa">
+              <div style={{ fontSize: 11, color: "rgba(120,200,255,0.5)", marginBottom: 8 }}>Liste des partenaires</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {(partners || []).slice(0, 5).map((p, i) => (
+                  <div key={p.id} style={{
+                    display: "flex", justifyContent: "space-between",
+                    padding: "5px 8px",
+                    background: i === 2 ? "rgba(0,180,255,0.08)" : "transparent",
+                    borderRadius: 4, fontSize: 10, color: "rgba(180,220,255,0.7)",
+                    border: i === 2 ? "1px solid rgba(0,180,255,0.2)" : "1px solid transparent",
+                  }}>
+                    <span style={{ fontFamily: "monospace", color: "rgba(120,200,255,0.5)" }}>{String(i + 1).padStart(3, "0")}</span>
+                    <span style={{ flex: 1, marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.name.slice(0, 16)}
+                    </span>
+                    <span style={{ color: "rgba(120,200,255,0.4)", fontSize: 9 }}>2023-05-16</span>
+                  </div>
+                ))}
+              </div>
+            </PanelBox>
+          </div>
+
+          {/* Center: Map */}
+          <div style={{
+            background: "rgba(5,15,35,0.8)",
+            border: "1px solid rgba(0,180,255,0.15)",
+            borderRadius: 12,
+            overflow: "hidden",
+            backdropFilter: "blur(8px)",
+          }}>
+            <div style={{
+              padding: "10px 16px",
+              borderBottom: "1px solid rgba(0,180,255,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(150,200,255,0.8)", letterSpacing: "0.12em" }}>
+                🗺 CARTE GÉOGRAPHIQUE — RÉSEAU PARTENAIRES
+              </span>
+              <span style={{ fontSize: 10, color: "rgba(0,180,255,0.6)" }}>{filtered.length} pts</span>
+            </div>
+            <div style={{ padding: 12 }}>
+              <PartnersMap partners={filtered} />
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <PanelBox title="Indicateurs clés" accent="#a78bfa">
+              <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 12 }}>
+                {[
+                  { pct: 65, val: stats.total, label: "Catégorie" },
+                  { pct: 32, val: stats.actifs, label: "Catégorie" },
+                ].map((d, i) => (
+                  <div key={i} style={{ textAlign: "center" }}>
+                    <RingGauge pct={d.pct} color={i === 0 ? "#00b4ff" : "#a78bfa"} />
+                    <div style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? "#00b4ff" : "#a78bfa", marginTop: 4 }}>{d.val}</div>
+                    <div style={{ fontSize: 9, color: "rgba(120,200,255,0.5)" }}>{d.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {["Série 1", "Série 2", "Série 3"].map((label, i) => {
+                  const pct = [78, 61, 47][i];
+                  const colors = ["#00b4ff", "#00e5a0", "#a78bfa"];
+                  return (
+                    <div key={i}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                        <span style={{ fontSize: 10, color: "rgba(150,200,255,0.6)" }}>{label}</span>
+                        <span style={{ fontSize: 10, color: colors[i] }}>{pct}%</span>
+                      </div>
+                      <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 2 }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: colors[i], borderRadius: 2, transition: "width 0.8s" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </PanelBox>
+
+            <PanelBox title="Répartition régionale" accent="#00e5a0">
+              <div style={{ fontSize: 10, color: "rgba(120,200,255,0.5)", marginBottom: 8 }}>Taux d'analyse   40%</div>
+              <div style={{ height: 140 }}>
+                {stats.byRegion.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.byRegion.slice(0, 6)}>
+                      <defs>
+                        <linearGradient id="barG" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00b4ff" />
+                          <stop offset="100%" stopColor="#00b4ff" stopOpacity={0.2} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" tick={{ fill: "rgba(120,200,255,0.4)", fontSize: 8 }} axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ background: "#0d1b2e", border: "1px solid #00b4ff40", borderRadius: 6, fontSize: 11, color: "#e0f4ff" }} />
+                      <Bar dataKey="value" fill="url(#barG)" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </div>
+            </PanelBox>
+
+            <PanelBox title="Statistiques globales" accent="#f97316">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                {[
+                  { label: "Total", val: stats.total, change: "+28%", pos: true },
+                  { label: "Actifs", val: stats.actifs, change: "+18%", pos: true },
+                  { label: "Critiques", val: stats.critiques, change: "+56%", pos: false },
+                  { label: "Score", val: stats.avgScore, change: "-7%", pos: false },
+                ].map((d, i) => (
+                  <div key={i} style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#e0f4ff" }}>{d.val.toLocaleString()}</div>
+                    <div style={{ fontSize: 9, color: d.pos ? "#00e5a0" : "#f97316" }}>{d.change}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00b4ff", flexShrink: 0 }} />
+                <div style={{ height: 1, flex: 1, background: "rgba(0,180,255,0.25)" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00e5a0", flexShrink: 0 }} />
+                <div style={{ height: 1, flex: 1, background: "rgba(0,229,160,0.25)" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a78bfa", flexShrink: 0 }} />
+              </div>
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                <InputBar placeholder="Champ de saisie d'information" />
+                <InputBar placeholder="Champ de saisie d'information" />
+              </div>
+            </PanelBox>
+          </div>
         </div>
 
-        {/* Map */}
-        <Card className="overflow-hidden rounded-2xl border-0 shadow-md">
-          <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-            <CardTitle className="text-base">🗺️ Carte des partenaires</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <PartnersMap partners={filtered} />
-          </CardContent>
-        </Card>
+        {/* Bottom nav */}
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 40, padding: "14px 0",
+          borderTop: "1px solid rgba(0,180,255,0.1)",
+        }}>
+          {["Tableau de bord", "Partenaires", "Analyses", "Paramètres"].map((label, i) => (
+            <button key={i} style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 12, color: i === 0 ? "#00b4ff" : "rgba(150,200,255,0.5)",
+              letterSpacing: "0.1em", padding: "4px 12px",
+              borderBottom: i === 0 ? "1px solid #00b4ff" : "1px solid transparent",
+              transition: "color 0.2s",
+            }}>{label}</button>
+          ))}
+        </div>
+
+        {/* Filters (below nav, compact) */}
+        <div style={{
+          display: "flex", gap: 10, flexWrap: "wrap", padding: "12px 0",
+          alignItems: "center",
+        }}>
+          <FilterIcon style={{ width: 14, height: 14, color: "rgba(0,180,255,0.6)" }} />
+          {[
+            { val: type, set: setType, opts: partners ? Array.from(new Set(partners.map(p => p.partner_type))) : [], ph: "Type" },
+            { val: region, set: setRegion, opts: [...MOROCCO_REGIONS], ph: "Région" },
+            { val: status, set: setStatus, opts: partners ? Array.from(new Set(partners.map(p => p.partnership_status))) : [], ph: "Statut" },
+            { val: follow, set: setFollow, opts: partners ? Array.from(new Set(partners.map(p => p.follow_up_status))) : [], ph: "Suivi" },
+          ].map((f, i) => (
+            <Select key={i} value={f.val} onValueChange={f.set}>
+              <SelectTrigger style={{
+                width: 160, height: 32, fontSize: 11,
+                background: "rgba(0,140,255,0.06)",
+                border: "1px solid rgba(0,180,255,0.2)",
+                color: "rgba(150,200,255,0.8)",
+                borderRadius: 6,
+              }}>
+                <SelectValue placeholder={f.ph} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{f.ph} — Tous</SelectItem>
+                {f.opts.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          ))}
+          <button onClick={reset} style={{
+            fontSize: 11, color: "rgba(0,180,255,0.7)",
+            background: "none", border: "1px solid rgba(0,180,255,0.2)",
+            borderRadius: 6, padding: "4px 12px", cursor: "pointer",
+          }}>Réinitialiser</button>
+        </div>
+
       </div>
     </div>
   );
 }
 
-function ChartCard({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
+function PanelBox({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
   return (
-    <Card className="overflow-hidden rounded-2xl border-0 shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <div className={`h-6 w-1.5 rounded-full bg-gradient-to-b ${accent}`} />
-          <CardTitle className="text-base font-semibold text-slate-800">{title}</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <div style={{
+      background: "rgba(5,15,35,0.75)",
+      border: `1px solid ${accent}20`,
+      borderTop: `2px solid ${accent}60`,
+      borderRadius: 10,
+      padding: "12px 14px",
+      backdropFilter: "blur(8px)",
+    }}>
+      <div style={{
+        fontSize: 10, fontWeight: 600, letterSpacing: "0.12em",
+        color: accent, marginBottom: 10, display: "flex", alignItems: "center", gap: 6,
+      }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: accent, display: "inline-block" }} />
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }
 
-function Empty() {
-  return <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">Aucune donnée</div>;
+function RingGauge({ pct, color }: { pct: number; color: string }) {
+  const r = 22, circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  return (
+    <svg width={56} height={56} viewBox="0 0 56 56">
+      <circle cx={28} cy={28} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
+      <circle cx={28} cy={28} r={r} fill="none" stroke={color} strokeWidth={4}
+        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+        transform="rotate(-90 28 28)" />
+      <text x={28} y={32} textAnchor="middle" fontSize={10} fontWeight={600} fill={color}>{pct}%</text>
+    </svg>
+  );
 }
 
-function FilterSelect({ value, onChange, placeholder, options }: { value: string; onChange: (v: string) => void; placeholder: string; options: string[] }) {
+function LegendDot({ color, label }: { color: string; label: string }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[200px] rounded-xl border-slate-200"><SelectValue placeholder={placeholder} /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value={ALL}>{placeholder} — Tous</SelectItem>
-        {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-      </SelectContent>
-    </Select>
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
+      <span style={{ fontSize: 9, color: "rgba(120,200,255,0.5)" }}>{label}</span>
+    </div>
+  );
+}
+
+function EmptyChart() {
+  return <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(120,200,255,0.2)", fontSize: 11 }}>Chargement…</div>;
+}
+
+function InputBar({ placeholder }: { placeholder: string }) {
+  return (
+    <div style={{
+      height: 24, borderRadius: 4, border: "1px solid rgba(0,180,255,0.2)",
+      background: "rgba(0,140,255,0.04)", padding: "0 8px",
+      display: "flex", alignItems: "center",
+    }}>
+      <span style={{ fontSize: 9, color: "rgba(120,200,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{placeholder}</span>
+    </div>
   );
 }
