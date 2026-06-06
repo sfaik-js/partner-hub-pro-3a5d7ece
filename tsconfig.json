@@ -5,6 +5,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,
